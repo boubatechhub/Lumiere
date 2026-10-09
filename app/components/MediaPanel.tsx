@@ -33,6 +33,36 @@ export function MediaPanel({
     <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 space-y-5">
       <h2 className="font-semibold">Médias</h2>
 
+      <div className="space-y-1">
+        <label className="text-sm text-neutral-400">Logo (affiché en haut de chaque slide)</label>
+        <div className="flex items-center gap-3">
+          {design.logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={design.logoUrl}
+              alt="Logo"
+              className="h-10 w-10 rounded object-contain bg-neutral-950 border border-neutral-800"
+            />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              e.target.files?.[0] && handleUpload(e.target.files[0], (url) => patch({ logoUrl: url }))
+            }
+            className="text-sm"
+          />
+          {design.logoUrl && (
+            <button
+              onClick={() => patch({ logoUrl: undefined })}
+              className="text-xs text-red-400 hover:text-red-300"
+            >
+              Retirer
+            </button>
+          )}
+        </div>
+      </div>
+
       {needsBackgroundMedia && (
         <div className="space-y-1">
           <label className="text-sm text-neutral-400">

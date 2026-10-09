@@ -34,6 +34,8 @@ export interface DesignConfig {
   background: BackgroundConfig;
   textColor: string;
   accentColor: string;
+  /** Logo affiché en haut de chaque slide (optionnel). */
+  logoUrl?: string;
   mainFontFamily: string;
   mainFontUrl?: string;
   translationFontFamily: string;
@@ -158,7 +160,12 @@ export function demoProjectArabic(): VideoProject {
         reference: "Sourate Al-Isra • 17:24",
       },
     ],
-    design: { ...defaultDesign(), attribution: "Le Noble Coran", pageName: "versets_de_lumiere" },
+    design: {
+      ...defaultDesign(),
+      attribution: "Le Noble Coran",
+      pageName: "versets_de_lumiere",
+      logoUrl: "/branding/logo.png",
+    },
   };
 }
 

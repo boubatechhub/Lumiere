@@ -1,8 +1,9 @@
 import React from "react";
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { DesignConfig, Verse } from "../types/video";
 import { Background } from "./Background";
 import { ensureFontLoaded } from "./fonts";
+import { resolveMediaSrc } from "./utils";
 
 function WordByWord({
   text,
@@ -40,6 +41,12 @@ export const Slide: React.FC<{
   const translationFontSize = mainFontSize * 0.42;
   const metaFontSize = mainFontSize * 0.22;
 
+  const hasLogo = Boolean(design.logoUrl);
+  const logoHeight = isPortrait ? height * 0.07 : height * 0.12;
+  // Espace réservé en haut pour que le logo (et l'en-tête, poussé sous lui)
+  // ne soit jamais rogné ni superposé au texte.
+  const contentTopPadding = hasLogo ? (isPortrait ? "24%" : "28%") : isPortrait ? "8%" : "6%";
+
   const entryFrames = Math.min(20, Math.max(6, durationInFrames - 4));
   const entryProgress = spring({ frame, fps, config: { damping: 200 }, durationInFrames: entryFrames });
 
@@ -74,6 +81,23 @@ export const Slide: React.FC<{
   return (
     <AbsoluteFill>
       <Background background={design.background} durationInFrames={durationInFrames} />
+
+      {hasLogo && (
+        <Img
+          src={resolveMediaSrc(design.logoUrl as string)}
+          style={{
+            position: "absolute",
+            top: "3%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            height: logoHeight,
+            width: "auto",
+            maxWidth: "40%",
+            objectFit: "contain",
+          }}
+        />
+      )}
+
       <AbsoluteFill
         style={{
           display: "flex",
@@ -81,7 +105,10 @@ export const Slide: React.FC<{
           justifyContent: "center",
           alignItems: "center",
           gap: isPortrait ? 32 : 24,
-          padding: isPortrait ? "8% 6%" : "6% 12%",
+          paddingTop: contentTopPadding,
+          paddingBottom: isPortrait ? "8%" : "6%",
+          paddingLeft: isPortrait ? "6%" : "12%",
+          paddingRight: isPortrait ? "6%" : "12%",
           color: design.textColor,
         }}
       >
@@ -89,7 +116,7 @@ export const Slide: React.FC<{
           <div
             style={{
               position: "absolute",
-              top: "4%",
+              top: hasLogo ? "16%" : "4%",
               left: "6%",
               right: "6%",
               display: "flex",

@@ -24,6 +24,7 @@ const designSchema = z.object({
   }),
   textColor: z.string(),
   accentColor: z.string(),
+  logoUrl: z.string().optional(),
   mainFontFamily: z.string(),
   mainFontUrl: z.string().optional(),
   translationFontFamily: z.string(),

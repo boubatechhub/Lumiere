@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.venv
+__pycache__
+out
+public/uploads/*
+public/renders/*
+!public/uploads/.gitkeep
+!public/renders/.gitkeep
+*.mp4
+.env*
+npm-debug.log*

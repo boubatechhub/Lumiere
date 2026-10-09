@@ -136,25 +136,25 @@ export function demoProjectArabic(): VideoProject {
   return {
     verses: [
       {
-        id: createVerseId(),
+        id: "demo-ar-1",
         text: "وَقَضَىٰ رَبُّكَ أَلَّا تَعْبُدُوا إِلَّا إِيَّاهُ وَبِالْوَالِدَيْنِ إِحْسَانًا",
         translation: "Ton Seigneur a décrété : n'adorez que Lui, et soyez bons envers vos parents.",
         reference: "Sourate Al-Isra • 17:23",
       },
       {
-        id: createVerseId(),
+        id: "demo-ar-2",
         text: "فَلَا تَقُل لَّهُمَا أُفٍّ وَلَا تَنْهَرْهُمَا وَقُل لَّهُمَا قَوْلًا كَرِيمًا",
         translation: "Ne leur dis pas « ouf », ne les repousse pas, et adresse-leur des paroles respectueuses.",
         reference: "Sourate Al-Isra • 17:23",
       },
       {
-        id: createVerseId(),
+        id: "demo-ar-3",
         text: "وَاخْفِضْ لَهُمَا جَنَاحَ الذُّلِّ مِنَ الرَّحْمَةِ",
         translation: "Abaisse pour eux l'aile de l'humilité, par miséricorde.",
         reference: "Sourate Al-Isra • 17:24",
       },
       {
-        id: createVerseId(),
+        id: "demo-ar-4",
         text: "وَقُل رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا",
         translation: "Et dis : « Seigneur, fais-leur miséricorde, comme ils m'ont élevé tout petit. »",
         reference: "Sourate Al-Isra • 17:24",
@@ -174,19 +174,19 @@ export function demoProjectLatin(): VideoProject {
   return {
     verses: [
       {
-        id: createVerseId(),
+        id: "demo-fr-1",
         text: "La vie est un mystère qu'il faut vivre, et non un problème qu'il faut résoudre.",
         translation: "Gandhi",
         reference: "Citation",
       },
       {
-        id: createVerseId(),
+        id: "demo-fr-2",
         text: "Le bonheur n'est pas une destination, c'est une façon de voyager.",
         translation: "Margaret Lee Runbeck",
         reference: "Citation",
       },
       {
-        id: createVerseId(),
+        id: "demo-fr-3",
         text: "Ce que nous faisons de notre vie est notre cadeau à Dieu.",
         translation: "Mère Teresa",
         reference: "Citation",

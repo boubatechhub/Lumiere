@@ -2,11 +2,19 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Player } from "@remotion/player";
-import { FORMAT_DIMENSIONS, calculateTotalDurationInFrames, demoProjectArabic, type VideoProject } from "@/types/video";
+import {
+  FONT_OPTIONS,
+  FORMAT_DIMENSIONS,
+  calculateTotalDurationInFrames,
+  demoProjectArabic,
+  type Verse,
+  type VideoProject,
+} from "@/types/video";
 import { VIDEO_FPS, VerseVideo } from "@/remotion/VerseVideo";
 import { VersesPanel } from "./VersesPanel";
 import { DesignPanel } from "./DesignPanel";
 import { MediaPanel } from "./MediaPanel";
+import { QuranImportPanel } from "./QuranImportPanel";
 
 const STORAGE_KEY = "verset-video-project-draft";
 
@@ -69,6 +77,15 @@ export function EditorApp() {
     }
   }
 
+  function handleQuranImport(imported: Verse[], mode: "replace" | "append") {
+    setProject((p) => {
+      const verses = mode === "append" ? [...p.verses, ...imported] : imported;
+      const isArabicFont = FONT_OPTIONS.some((f) => f.family === p.design.mainFontFamily && f.rtl);
+      const design = isArabicFont && p.design.mainRTL ? p.design : { ...p.design, mainRTL: true, mainFontFamily: "Amiri", mainFontUrl: undefined };
+      return { ...p, verses, design };
+    });
+  }
+
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="border-b border-neutral-800 px-6 py-4">
@@ -80,6 +97,7 @@ export function EditorApp() {
 
       <main className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] gap-6 p-6 max-w-7xl mx-auto">
         <div className="space-y-6 order-2 lg:order-1">
+          <QuranImportPanel onImport={handleQuranImport} />
           <VersesPanel verses={project.verses} onChange={(verses) => setProject((p) => ({ ...p, verses }))} />
           <DesignPanel design={project.design} onChange={(design) => setProject((p) => ({ ...p, design }))} />
           <MediaPanel design={project.design} onChange={(design) => setProject((p) => ({ ...p, design }))} />

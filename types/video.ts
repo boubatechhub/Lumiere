@@ -35,6 +35,8 @@ export interface DesignConfig {
   format: VideoFormat;
   background: BackgroundConfig;
   textColor: string;
+  /** Couleur du texte du verset (arabe/texte principal) ; si absent, utilise textColor. */
+  verseTextColor?: string;
   accentColor: string;
   /** Logo affiché en haut de chaque slide (optionnel). */
   logoUrl?: string;

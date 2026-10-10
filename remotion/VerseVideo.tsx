@@ -84,12 +84,14 @@ export const VerseVideo: React.FC<VerseVideoProps> = ({ verses, design }) => {
         <Audio
           src={resolveMediaSrc(design.audio.musicUrl)}
           volume={(f) => fadedVolume(design.audio.musicVolume, f, durationInFrames, fps)}
+          pauseWhenBuffering
         />
       )}
       {design.audio.ambienceUrl && (
         <Audio
           src={resolveMediaSrc(design.audio.ambienceUrl)}
           volume={(f) => fadedVolume(design.audio.ambienceVolume, f, durationInFrames, fps)}
+          pauseWhenBuffering
         />
       )}
     </AbsoluteFill>

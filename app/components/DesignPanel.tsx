@@ -149,13 +149,29 @@ export function DesignPanel({
 
       <div className="grid grid-cols-2 gap-4">
         <label className="text-xs text-neutral-400 flex items-center gap-2">
-          Couleur du texte
+          Couleur du texte (traduction, en-tête)
           <input type="color" value={design.textColor} onChange={(e) => patch({ textColor: e.target.value })} />
+        </label>
+        <label className="text-xs text-neutral-400 flex items-center gap-2">
+          Couleur du texte du verset
+          <input
+            type="color"
+            value={design.verseTextColor ?? design.textColor}
+            onChange={(e) => patch({ verseTextColor: e.target.value })}
+          />
         </label>
         <label className="text-xs text-neutral-400 flex items-center gap-2">
           Couleur d&apos;accent
           <input type="color" value={design.accentColor} onChange={(e) => patch({ accentColor: e.target.value })} />
         </label>
+        {design.verseTextColor && (
+          <button
+            onClick={() => patch({ verseTextColor: undefined })}
+            className="text-xs text-neutral-500 hover:text-neutral-300 text-left"
+          >
+            Réinitialiser la couleur du verset
+          </button>
+        )}
       </div>
 
       <div className="space-y-2">

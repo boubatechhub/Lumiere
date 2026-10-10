@@ -24,6 +24,7 @@ const designSchema = z.object({
     kenBurns: z.boolean().optional(),
   }),
   textColor: z.string(),
+  verseTextColor: z.string().optional(),
   accentColor: z.string(),
   logoUrl: z.string().optional(),
   mainFontFamily: z.string(),

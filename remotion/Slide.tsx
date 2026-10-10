@@ -83,7 +83,11 @@ export const Slide: React.FC<{
     <AbsoluteFill>
       <Background background={design.background} durationInFrames={durationInFrames} />
 
-      {verse.audioUrl && <Audio src={resolveMediaSrc(verse.audioUrl)} />}
+      {/* pauseWhenBuffering : évite que l'aperçu en direct se désynchronise en
+          changeant de verset avant que son clip audio distant ait fini de
+          charger — il met en pause le temps que l'audio soit prêt plutôt que
+          de dériver. Sans effet sur le rendu final (déjà frame-exact). */}
+      {verse.audioUrl && <Audio src={resolveMediaSrc(verse.audioUrl)} pauseWhenBuffering />}
 
       {showHeaderRow && (
         <div
@@ -157,6 +161,7 @@ export const Slide: React.FC<{
             fontSize: mainFontSize,
             lineHeight: 1.4,
             textAlign: "center",
+            color: design.verseTextColor ?? design.textColor,
             opacity: mainOpacity,
             transform: mainTransform,
             unicodeBidi: "plaintext",

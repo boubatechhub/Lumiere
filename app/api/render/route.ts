@@ -12,6 +12,7 @@ const verseSchema = z.object({
   translation: z.string().min(1),
   reference: z.string().optional(),
   durationSec: z.number().positive().optional(),
+  audioUrl: z.string().optional(),
 });
 
 const designSchema = z.object({

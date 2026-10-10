@@ -10,6 +10,8 @@ export interface Verse {
   reference?: string;
   /** Override de durée en secondes ; sinon calcul auto. */
   durationSec?: number;
+  /** Audio de récitation propre à ce verset (ex. import Quran.com), joué pendant son slide. */
+  audioUrl?: string;
 }
 
 export interface BackgroundConfig {

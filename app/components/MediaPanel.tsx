@@ -12,15 +12,17 @@ export function MediaPanel({
   onChange: (design: DesignConfig) => void;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [fileNames, setFileNames] = useState<Record<string, string>>({});
 
   function patch(partial: Partial<DesignConfig>) {
     onChange({ ...design, ...partial });
   }
 
-  async function handleUpload(file: File, apply: (url: string) => void) {
+  async function handleUpload(key: string, file: File, apply: (url: string) => void) {
     setError(null);
     try {
       const url = await uploadFile(file);
+      setFileNames((prev) => ({ ...prev, [key]: file.name }));
       apply(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l'upload.");
@@ -48,7 +50,8 @@ export function MediaPanel({
             type="file"
             accept="image/*"
             onChange={(e) =>
-              e.target.files?.[0] && handleUpload(e.target.files[0], (url) => patch({ logoUrl: url }))
+              e.target.files?.[0] &&
+              handleUpload("logo", e.target.files[0], (url) => patch({ logoUrl: url }))
             }
             className="text-sm"
           />
@@ -73,14 +76,16 @@ export function MediaPanel({
             accept={design.background.type === "image" ? "image/*" : "video/*"}
             onChange={(e) =>
               e.target.files?.[0] &&
-              handleUpload(e.target.files[0], (url) =>
+              handleUpload("background", e.target.files[0], (url) =>
                 patch({ background: { ...design.background, mediaUrl: url } }),
               )
             }
             className="text-sm"
           />
           {design.background.mediaUrl && (
-            <p className="text-xs text-neutral-500 truncate">Fichier actuel : {design.background.mediaUrl}</p>
+            <p className="text-xs text-emerald-400 truncate">
+              ✓ {fileNames.background ?? "Fichier importé"}
+            </p>
           )}
         </div>
       )}
@@ -92,7 +97,7 @@ export function MediaPanel({
           accept="audio/*"
           onChange={(e) =>
             e.target.files?.[0] &&
-            handleUpload(e.target.files[0], (url) => patch({ audio: { ...design.audio, musicUrl: url } }))
+            handleUpload("music", e.target.files[0], (url) => patch({ audio: { ...design.audio, musicUrl: url } }))
           }
           className="text-sm"
         />
@@ -109,7 +114,7 @@ export function MediaPanel({
           />
         </div>
         {design.audio.musicUrl && (
-          <p className="text-xs text-neutral-500 truncate">Fichier actuel : {design.audio.musicUrl}</p>
+          <p className="text-xs text-emerald-400 truncate">✓ {fileNames.music ?? "Fichier importé"}</p>
         )}
       </div>
 
@@ -120,7 +125,9 @@ export function MediaPanel({
           accept="audio/*"
           onChange={(e) =>
             e.target.files?.[0] &&
-            handleUpload(e.target.files[0], (url) => patch({ audio: { ...design.audio, ambienceUrl: url } }))
+            handleUpload("ambience", e.target.files[0], (url) =>
+              patch({ audio: { ...design.audio, ambienceUrl: url } }),
+            )
           }
           className="text-sm"
         />
@@ -137,11 +144,17 @@ export function MediaPanel({
           />
         </div>
         {design.audio.ambienceUrl && (
-          <p className="text-xs text-neutral-500 truncate">Fichier actuel : {design.audio.ambienceUrl}</p>
+          <p className="text-xs text-emerald-400 truncate">✓ {fileNames.ambience ?? "Fichier importé"}</p>
         )}
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && (
+        <div className="rounded-lg border border-red-900 bg-red-950/40 p-3">
+          <p className="text-xs text-red-300 flex items-start gap-2">
+            <span aria-hidden>⚠</span> {error}
+          </p>
+        </div>
+      )}
 
       <p className="text-xs text-neutral-500">
         Aucune musique n&apos;est fournie par défaut : importez vos propres fichiers audio libres de droits.

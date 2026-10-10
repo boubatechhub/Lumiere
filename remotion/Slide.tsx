@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Img, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { DesignConfig, Verse } from "../types/video";
 import { Background } from "./Background";
 import { ensureFontLoaded } from "./fonts";
@@ -42,10 +42,11 @@ export const Slide: React.FC<{
   const metaFontSize = mainFontSize * 0.22;
 
   const hasLogo = Boolean(design.logoUrl);
-  const logoHeight = isPortrait ? height * 0.07 : height * 0.12;
-  // Espace réservé en haut pour que le logo (et l'en-tête, poussé sous lui)
-  // ne soit jamais rogné ni superposé au texte.
-  const contentTopPadding = hasLogo ? (isPortrait ? "24%" : "28%") : isPortrait ? "8%" : "6%";
+  // Logo aligné sur la même ligne que les textes d'en-tête (pageName / référence).
+  const headerLogoHeight = metaFontSize * 6.4;
+  const hasHeaderText = design.showReference && Boolean(design.pageName || verse.reference);
+  const showHeaderRow = hasLogo || hasHeaderText;
+  const contentTopPadding = isPortrait ? "14%" : "13%";
 
   const entryFrames = Math.min(20, Math.max(6, durationInFrames - 4));
   const entryProgress = spring({ frame, fps, config: { damping: 200 }, durationInFrames: entryFrames });
@@ -82,20 +83,57 @@ export const Slide: React.FC<{
     <AbsoluteFill>
       <Background background={design.background} durationInFrames={durationInFrames} />
 
-      {hasLogo && (
-        <Img
-          src={resolveMediaSrc(design.logoUrl as string)}
+      {verse.audioUrl && <Audio src={resolveMediaSrc(verse.audioUrl)} />}
+
+      {showHeaderRow && (
+        <div
           style={{
             position: "absolute",
-            top: "3%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            height: logoHeight,
-            width: "auto",
-            maxWidth: "40%",
-            objectFit: "contain",
+            top: "7%",
+            left: "6%",
+            right: "6%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            color: design.textColor,
           }}
-        />
+        >
+          <span
+            style={{
+              flex: 1,
+              fontFamily: design.translationFontFamily,
+              fontSize: metaFontSize,
+              opacity: 0.85,
+            }}
+          >
+            {design.pageName}
+          </span>
+          {hasLogo && (
+            <Img
+              src={resolveMediaSrc(design.logoUrl as string)}
+              style={{
+                height: headerLogoHeight,
+                width: headerLogoHeight,
+                maxWidth: "28%",
+                objectFit: "cover",
+                borderRadius: "50%",
+                flexShrink: 0,
+              }}
+            />
+          )}
+          <span
+            style={{
+              flex: 1,
+              textAlign: "right",
+              fontFamily: design.translationFontFamily,
+              fontSize: metaFontSize,
+              opacity: 0.85,
+            }}
+          >
+            {verse.reference}
+          </span>
+        </div>
       )}
 
       <AbsoluteFill
@@ -112,25 +150,6 @@ export const Slide: React.FC<{
           color: design.textColor,
         }}
       >
-        {design.showReference && (design.pageName || verse.reference) && (
-          <div
-            style={{
-              position: "absolute",
-              top: hasLogo ? "16%" : "4%",
-              left: "6%",
-              right: "6%",
-              display: "flex",
-              justifyContent: "space-between",
-              fontFamily: design.translationFontFamily,
-              fontSize: metaFontSize,
-              opacity: 0.85,
-            }}
-          >
-            <span>{design.pageName}</span>
-            <span>{verse.reference}</span>
-          </div>
-        )}
-
         <div
           dir={design.mainRTL ? "rtl" : "ltr"}
           style={{

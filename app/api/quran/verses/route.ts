@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
   const fromVerse = Number(params.get("from"));
   const toVerse = Number(params.get("to"));
   const translationId = Number(params.get("translation"));
+  const reciterParam = params.get("reciter");
+  const reciterId = reciterParam ? Number(reciterParam) : undefined;
 
   if (!chapterId || !fromVerse || !toVerse || !translationId) {
     return NextResponse.json(
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const verses = await fetchQuranVerses({ chapterId, fromVerse, toVerse, translationId });
+    const verses = await fetchQuranVerses({ chapterId, fromVerse, toVerse, translationId, reciterId });
     return NextResponse.json({ verses });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erreur inconnue.";

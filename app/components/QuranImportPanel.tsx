@@ -18,6 +18,14 @@ interface TranslationSummary {
   authorName?: string;
 }
 
+interface ReciterSummary {
+  id: number;
+  name: string;
+  style?: string;
+}
+
+const NO_AUDIO = "none";
+
 export function QuranImportPanel({
   onImport,
 }: {
@@ -25,31 +33,37 @@ export function QuranImportPanel({
 }) {
   const [chapters, setChapters] = useState<ChapterSummary[]>([]);
   const [translations, setTranslations] = useState<TranslationSummary[]>([]);
+  const [reciters, setReciters] = useState<ReciterSummary[]>([]);
   const [chapterId, setChapterId] = useState<number | null>(null);
   const [fromVerse, setFromVerse] = useState(1);
   const [toVerse, setToVerse] = useState(1);
   const [translationId, setTranslationId] = useState<number | null>(null);
+  const [reciterId, setReciterId] = useState<string>(NO_AUDIO);
   const [append, setAppend] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/quran/chapters").then((res) => res.json()),
       fetch("/api/quran/translations").then((res) => res.json()),
+      fetch("/api/quran/reciters").then((res) => res.json()),
     ])
-      .then(([chaptersRes, translationsRes]) => {
-        if (chaptersRes.error || translationsRes.error) {
-          setLoadError(chaptersRes.error ?? translationsRes.error);
+      .then(([chaptersRes, translationsRes, recitersRes]) => {
+        if (chaptersRes.error || translationsRes.error || recitersRes.error) {
+          setLoadError(chaptersRes.error ?? translationsRes.error ?? recitersRes.error);
           return;
         }
         setChapters(chaptersRes.chapters);
         setTranslations(translationsRes.translations);
+        setReciters(recitersRes.reciters);
         if (chaptersRes.chapters[0]) setChapterId(chaptersRes.chapters[0].id);
         if (translationsRes.translations[0]) setTranslationId(translationsRes.translations[0].id);
       })
-      .catch((err) => setLoadError(err instanceof Error ? err.message : "Échec du chargement."));
+      .catch((err) => setLoadError(err instanceof Error ? err.message : "Échec du chargement."))
+      .finally(() => setInitialLoading(false));
   }, []);
 
   const selectedChapter = chapters.find((c) => c.id === chapterId);
@@ -65,6 +79,8 @@ export function QuranImportPanel({
         to: String(toVerse),
         translation: String(translationId),
       });
+      if (reciterId !== NO_AUDIO) params.set("reciter", reciterId);
+
       const res = await fetch(`/api/quran/verses?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Échec de l'import.");
@@ -74,11 +90,20 @@ export function QuranImportPanel({
         : `Sourate ${chapterId}`;
 
       const verses: Verse[] = data.verses.map(
-        (v: { verseKey: string; verseNumber: number; textUthmani: string; translation: string }) => ({
+        (v: {
+          verseKey: string;
+          verseNumber: number;
+          textUthmani: string;
+          translation: string;
+          audioUrl?: string;
+          durationSec?: number;
+        }) => ({
           id: createVerseId(),
           text: v.textUthmani,
           translation: v.translation,
           reference: `${reference} • ${v.verseKey}`,
+          audioUrl: v.audioUrl,
+          durationSec: v.durationSec,
         }),
       );
 
@@ -93,7 +118,9 @@ export function QuranImportPanel({
   if (loadError) {
     return (
       <section className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-4 space-y-2">
-        <h2 className="font-semibold text-amber-200">Import depuis Quran.com</h2>
+        <h2 className="font-semibold text-amber-200 flex items-center gap-2">
+          <span aria-hidden>⚠</span> Import depuis Quran.com
+        </h2>
         <p className="text-sm text-amber-200/80">{loadError}</p>
         <p className="text-xs text-neutral-400">
           Ajoute QURAN_CLIENT_ID / QURAN_CLIENT_SECRET dans .env.local (voir .env.example) — identifiants
@@ -103,6 +130,22 @@ export function QuranImportPanel({
           </a>
           , puis relance le serveur.
         </p>
+      </section>
+    );
+  }
+
+  if (initialLoading) {
+    return (
+      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 space-y-3">
+        <h2 className="font-semibold">Import depuis Quran.com</h2>
+        <div className="space-y-2 animate-pulse">
+          <div className="h-9 rounded-md bg-neutral-800" />
+          <div className="h-9 rounded-md bg-neutral-800" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="h-9 rounded-md bg-neutral-800" />
+            <div className="h-9 rounded-md bg-neutral-800" />
+          </div>
+        </div>
       </section>
     );
   }
@@ -152,6 +195,28 @@ export function QuranImportPanel({
           </select>
         </div>
 
+        <div className="space-y-1 sm:col-span-2">
+          <label className="text-xs text-neutral-400">Récitation audio</label>
+          <select
+            value={reciterId}
+            onChange={(e) => setReciterId(e.target.value)}
+            className="w-full rounded-md bg-neutral-950 border border-neutral-800 p-2 text-sm"
+          >
+            <option value={NO_AUDIO}>Sans audio (texte seulement)</option>
+            {reciters.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+                {r.style ? ` (${r.style})` : ""}
+              </option>
+            ))}
+          </select>
+          {reciterId !== NO_AUDIO && (
+            <p className="text-xs text-neutral-500">
+              La durée de chaque slide suivra automatiquement la récitation.
+            </p>
+          )}
+        </div>
+
         <div className="space-y-1">
           <label className="text-xs text-neutral-400">
             Du verset {selectedChapter ? `(1-${selectedChapter.versesCount})` : ""}
@@ -186,14 +251,27 @@ export function QuranImportPanel({
         Ajouter à la suite des versets existants (sinon, les remplace)
       </label>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <div className="rounded-lg border border-red-900 bg-red-950/40 p-3">
+          <p className="text-sm text-red-300 flex items-start gap-2">
+            <span aria-hidden>⚠</span> {error}
+          </p>
+        </div>
+      )}
 
       <button
         onClick={handleImport}
         disabled={loading || !chapterId || !translationId}
-        className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold py-2.5 transition"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 transition"
       >
-        {loading ? "Import en cours..." : "Importer depuis Quran.com"}
+        {loading ? (
+          <>
+            <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            Import en cours...
+          </>
+        ) : (
+          "Importer depuis Quran.com"
+        )}
       </button>
     </section>
   );

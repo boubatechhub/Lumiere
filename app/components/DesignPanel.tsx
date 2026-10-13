@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { FONT_OPTIONS, type DesignConfig } from "@/types/video";
+import {
+  DEFAULT_TRANSLATION_LINE_HEIGHT,
+  DEFAULT_VERSE_LINE_HEIGHT,
+  FONT_OPTIONS,
+  type DesignConfig,
+} from "@/types/video";
 import { familyNameFromFile, uploadFile } from "@/lib/upload";
 
 const TEXT_ENTRY_OPTIONS: { value: DesignConfig["textEntry"]; label: string }[] = [
@@ -24,6 +29,70 @@ const BACKGROUND_TYPE_OPTIONS: { value: DesignConfig["background"]["type"]; labe
   { value: "image", label: "Image" },
   { value: "video", label: "Vidéo" },
 ];
+
+function ScaleSlider({
+  label,
+  value,
+  onChange,
+  min = 0.5,
+  max = 1.8,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs text-neutral-400 flex items-center justify-between">
+        <span>{label}</span>
+        <span>{Math.round(value * 100)}%</span>
+      </label>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={0.05}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full"
+      />
+    </div>
+  );
+}
+
+function LineHeightSlider({
+  label,
+  value,
+  onChange,
+  min = 1,
+  max = 2.4,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs text-neutral-400 flex items-center justify-between">
+        <span>{label}</span>
+        <span>{value.toFixed(2)}</span>
+      </label>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={0.05}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full"
+      />
+    </div>
+  );
+}
 
 export function DesignPanel({
   design,
@@ -338,6 +407,116 @@ export function DesignPanel({
         />
         Afficher la référence / l&apos;en-tête
       </label>
+
+      <div className="space-y-1">
+        <label className="text-xs text-neutral-400 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={design.showCoverSlide ?? false}
+            onChange={(e) => patch({ showCoverSlide: e.target.checked })}
+          />
+          Écran de couverture (logo + nom de page) au début de la vidéo
+        </label>
+        {design.showCoverSlide && (
+          <label className="text-xs text-neutral-400 flex items-center gap-2 pl-5">
+            Durée :
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={design.coverDurationSec ?? 3}
+              onChange={(e) => patch({ coverDurationSec: Number(e.target.value) })}
+              className="w-16 rounded-md bg-neutral-950 border border-neutral-800 p-1"
+            />
+            s
+          </label>
+        )}
+        {design.showCoverSlide && !design.logoUrl && !design.pageName && (
+          <p className="text-xs text-amber-400 pl-5">
+            Ajoute un logo (panneau Médias) ou un nom de page ci-dessus pour que la couverture s&apos;affiche.
+          </p>
+        )}
+        {design.showCoverSlide && (design.logoUrl || design.pageName) && (
+          <div className="grid grid-cols-2 gap-3 pl-5 pt-1">
+            <ScaleSlider
+              label="Taille du logo"
+              value={design.coverLogoScale ?? 1}
+              onChange={(v) => patch({ coverLogoScale: v })}
+            />
+            <ScaleSlider
+              label="Taille du titre"
+              value={design.coverTitleScale ?? 1}
+              onChange={(v) => patch({ coverTitleScale: v })}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs text-neutral-400 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={design.showCountdownTimer ?? false}
+            onChange={(e) => patch({ showCountdownTimer: e.target.checked })}
+          />
+          Minuteur circulaire sous la traduction (décompte le temps restant du verset)
+        </label>
+        {design.showCountdownTimer && (
+          <div className="pl-5 pt-1">
+            <ScaleSlider
+              label="Taille du minuteur"
+              value={design.countdownScale ?? 1}
+              onChange={(v) => patch({ countdownScale: v })}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-neutral-800 p-3">
+        <p className="text-sm text-neutral-200">Ajustements (tailles, interligne)</p>
+        <p className="text-xs text-neutral-500">
+          Réglages fins de la mise en page, si les tailles par défaut ne conviennent pas à ton contenu.
+          Verset et traduction sont ajustables séparément.
+        </p>
+
+        <div className="grid grid-cols-2 gap-3">
+          <ScaleSlider
+            label="Taille du verset"
+            value={design.verseTextScale ?? 1}
+            onChange={(v) => patch({ verseTextScale: v })}
+          />
+          <LineHeightSlider
+            label="Interligne du verset"
+            value={design.verseLineHeight ?? DEFAULT_VERSE_LINE_HEIGHT}
+            onChange={(v) => patch({ verseLineHeight: v })}
+          />
+          <ScaleSlider
+            label="Taille de la traduction"
+            value={design.translationTextScale ?? 1}
+            onChange={(v) => patch({ translationTextScale: v })}
+          />
+          <LineHeightSlider
+            label="Interligne de la traduction"
+            value={design.translationLineHeight ?? DEFAULT_TRANSLATION_LINE_HEIGHT}
+            onChange={(v) => patch({ translationLineHeight: v })}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-neutral-800">
+          <ScaleSlider
+            label="Marges générales (slide)"
+            value={design.marginScale ?? 1}
+            onChange={(v) => patch({ marginScale: v })}
+            min={0.4}
+            max={1.6}
+          />
+          <ScaleSlider
+            label="Taille du logo (en-tête)"
+            value={design.logoScale ?? 1}
+            onChange={(v) => patch({ logoScale: v })}
+          />
+        </div>
+      </div>
     </section>
   );
 }

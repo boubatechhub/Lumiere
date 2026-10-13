@@ -12,6 +12,8 @@ export interface Verse {
   durationSec?: number;
   /** Audio de récitation propre à ce verset (ex. import Quran.com), joué pendant son slide. */
   audioUrl?: string;
+  /** Image de fond spécifique à ce verset (ex. recherche web automatique), prioritaire sur design.background. */
+  backgroundImageUrl?: string;
 }
 
 export interface BackgroundConfig {
@@ -54,6 +56,37 @@ export interface DesignConfig {
   audio: AudioConfig;
   /** Durée par verset en secondes, ou calcul automatique depuis la longueur du texte. */
   secondsPerVerse: number | "auto";
+  /** Si actif, utilise Verse.backgroundImageUrl (image web par verset) quand disponible. */
+  autoBackgroundEnabled?: boolean;
+  /** Écran de couverture (logo + nom de page) au tout début de la vidéo. */
+  showCoverSlide?: boolean;
+  coverDurationSec?: number;
+  /** Multiplicateur de taille du logo sur l'écran de couverture (défaut 1). */
+  coverLogoScale?: number;
+  /** Multiplicateur de taille du titre sur l'écran de couverture (défaut 1). */
+  coverTitleScale?: number;
+  /** Marges générales du slide (en-tête, haut/bas du contenu) ; défaut 1. */
+  marginScale?: number;
+  /** Multiplicateur de taille du logo dans l'en-tête des slides (défaut 1). */
+  logoScale?: number;
+  /** Taille et interligne réglables séparément pour le verset et la traduction. */
+  verseTextScale?: number;
+  translationTextScale?: number;
+  verseLineHeight?: number;
+  translationLineHeight?: number;
+  /** Minuteur circulaire sous la traduction, qui décompte le temps restant du verset affiché. */
+  showCountdownTimer?: boolean;
+  countdownScale?: number;
+}
+
+export const DEFAULT_VERSE_LINE_HEIGHT = 1.6;
+export const DEFAULT_TRANSLATION_LINE_HEIGHT = 1.5;
+
+export const DEFAULT_COVER_DURATION_SEC = 3;
+
+/** Un écran de couverture n'a de sens que s'il y a un logo ou un nom de page à montrer. */
+export function hasCoverContent(design: DesignConfig): boolean {
+  return Boolean(design.showCoverSlide && (design.logoUrl || design.pageName));
 }
 
 export interface VideoProject {
@@ -84,6 +117,29 @@ export const FONT_OPTIONS: FontOption[] = [
     rtl: true,
   },
   { label: "Poppins (latin)", family: "Poppins", file: "fonts/Poppins-Regular.ttf", rtl: false },
+  {
+    label: "Scheherazade New (arabe)",
+    family: "ScheherazadeNew",
+    file: "fonts/ScheherazadeNew-Regular.ttf",
+    rtl: true,
+  },
+  { label: "Lateef (arabe)", family: "Lateef", file: "fonts/Lateef-Regular.ttf", rtl: true },
+  { label: "Reem Kufi (arabe, kufique)", family: "ReemKufi", file: "fonts/ReemKufi-Regular.ttf", rtl: true },
+  { label: "Aref Ruqaa (arabe, calligraphié)", family: "ArefRuqaa", file: "fonts/ArefRuqaa-Regular.ttf", rtl: true },
+  {
+    label: "Playfair Display (latin, élégant)",
+    family: "PlayfairDisplay",
+    file: "fonts/PlayfairDisplay-Regular.ttf",
+    rtl: false,
+  },
+  { label: "Lora (latin, serif)", family: "Lora", file: "fonts/Lora-Regular.ttf", rtl: false },
+  { label: "Montserrat (latin, moderne)", family: "Montserrat", file: "fonts/Montserrat-Regular.ttf", rtl: false },
+  {
+    label: "Merriweather (latin, lisible)",
+    family: "Merriweather",
+    file: "fonts/Merriweather-Regular.ttf",
+    rtl: false,
+  },
 ];
 
 const WORDS_PER_SECOND = 2;
@@ -104,11 +160,16 @@ export function resolveVerseDurationSec(verse: Verse, design: DesignConfig): num
 /** Durée totale de la composition en frames, en tenant compte du chevauchement des transitions. */
 export function calculateTotalDurationInFrames(verses: Verse[], design: DesignConfig, fps: number): number {
   const transitionFrames = Math.round((design.transitionDurationMs / 1000) * fps);
-  const totalFrames = verses.reduce((sum, verse, i) => {
+  const versesFrames = verses.reduce((sum, verse, i) => {
     const frames = Math.round(resolveVerseDurationSec(verse, design) * fps);
     return sum + frames - (i > 0 ? transitionFrames : 0);
   }, 0);
-  return Math.max(totalFrames, fps);
+
+  const withCover = hasCoverContent(design);
+  const coverFrames = withCover ? Math.round((design.coverDurationSec ?? DEFAULT_COVER_DURATION_SEC) * fps) : 0;
+  const coverOverlap = withCover && verses.length > 0 ? transitionFrames : 0;
+
+  return Math.max(coverFrames + versesFrames - coverOverlap, fps);
 }
 
 export function createVerseId(): string {
@@ -132,6 +193,8 @@ export function defaultDesign(): DesignConfig {
     pageName: "",
     audio: { musicVolume: 0.5, ambienceVolume: 0.3 },
     secondsPerVerse: "auto",
+    showCoverSlide: true,
+    coverDurationSec: DEFAULT_COVER_DURATION_SEC,
   };
 }
 

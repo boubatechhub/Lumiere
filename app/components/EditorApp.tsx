@@ -138,7 +138,12 @@ export function EditorApp() {
           <QuranImportPanel onImport={handleQuranImport} />
           <VersesPanel verses={project.verses} onChange={(verses) => setProject((p) => ({ ...p, verses }))} />
           <DesignPanel design={project.design} onChange={(design) => setProject((p) => ({ ...p, design }))} />
-          <MediaPanel design={project.design} onChange={(design) => setProject((p) => ({ ...p, design }))} />
+          <MediaPanel
+            design={project.design}
+            onChange={(design) => setProject((p) => ({ ...p, design }))}
+            verses={project.verses}
+            onVersesChange={(verses) => setProject((p) => ({ ...p, verses }))}
+          />
         </div>
 
         <div className="order-1 lg:order-2">

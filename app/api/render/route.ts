@@ -13,6 +13,7 @@ const verseSchema = z.object({
   reference: z.string().optional(),
   durationSec: z.number().positive().optional(),
   audioUrl: z.string().optional(),
+  backgroundImageUrl: z.string().optional(),
 });
 
 const designSchema = z.object({
@@ -45,6 +46,19 @@ const designSchema = z.object({
     ambienceVolume: z.number().min(0).max(1),
   }),
   secondsPerVerse: z.union([z.number().positive(), z.literal("auto")]),
+  autoBackgroundEnabled: z.boolean().optional(),
+  showCoverSlide: z.boolean().optional(),
+  coverDurationSec: z.number().positive().optional(),
+  coverLogoScale: z.number().positive().optional(),
+  coverTitleScale: z.number().positive().optional(),
+  marginScale: z.number().positive().optional(),
+  logoScale: z.number().positive().optional(),
+  verseTextScale: z.number().positive().optional(),
+  translationTextScale: z.number().positive().optional(),
+  verseLineHeight: z.number().positive().optional(),
+  translationLineHeight: z.number().positive().optional(),
+  showCountdownTimer: z.boolean().optional(),
+  countdownScale: z.number().positive().optional(),
 });
 
 const requestSchema = z.object({

@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Audio, interpolate, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, useVideoConfig } from "remotion";
 import type { CalculateMetadataFunction } from "remotion";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
@@ -7,10 +7,17 @@ import { slide } from "@remotion/transitions/slide";
 import { wipe } from "@remotion/transitions/wipe";
 import { zoomInOut } from "@remotion/transitions/zoom-in-out";
 import type { TransitionPresentation } from "@remotion/transitions";
-import { FORMAT_DIMENSIONS, calculateTotalDurationInFrames, resolveVerseDurationSec } from "../types/video";
+import {
+  DEFAULT_COVER_DURATION_SEC,
+  FORMAT_DIMENSIONS,
+  calculateTotalDurationInFrames,
+  hasCoverContent,
+  resolveVerseDurationSec,
+} from "../types/video";
 import type { DesignConfig, Verse } from "../types/video";
+import { CoverSlide } from "./CoverSlide";
 import { Slide } from "./Slide";
-import { resolveMediaSrc } from "./utils";
+import { fadedVolume, resolveMediaSrc } from "./utils";
 
 // Type alias (pas interface) : requis pour satisfaire la contrainte
 // `Record<string, unknown>` utilisée par les génériques de Remotion
@@ -37,15 +44,6 @@ function resolvePresentation(design: DesignConfig) {
   }
 }
 
-function fadedVolume(base: number, frame: number, durationInFrames: number, fps: number) {
-  const fadeFrames = Math.min(fps, Math.floor(durationInFrames / 2));
-  const fadeIn = interpolate(frame, [0, fadeFrames], [0, 1], { extrapolateRight: "clamp" });
-  const fadeOut = interpolate(frame, [durationInFrames - fadeFrames, durationInFrames], [1, 0], {
-    extrapolateLeft: "clamp",
-  });
-  return base * Math.min(fadeIn, fadeOut);
-}
-
 export const calculateVerseVideoMetadata: CalculateMetadataFunction<VerseVideoProps> = ({ props }) => {
   const fps = VIDEO_FPS;
   const { width, height } = FORMAT_DIMENSIONS[props.design.format];
@@ -56,15 +54,52 @@ export const calculateVerseVideoMetadata: CalculateMetadataFunction<VerseVideoPr
 export const VerseVideo: React.FC<VerseVideoProps> = ({ verses, design }) => {
   const { fps, durationInFrames } = useVideoConfig();
   const transitionFrames = Math.round((design.transitionDurationMs / 1000) * fps);
+  const withCover = hasCoverContent(design);
+  const coverFrames = Math.round((design.coverDurationSec ?? DEFAULT_COVER_DURATION_SEC) * fps);
+
+  // Position absolue (en frames) de chaque verset dans la vidéo entière —
+  // nécessaire pour un minuteur qui décompte la durée totale plutôt que
+  // celle du seul verset affiché (useCurrentFrame est local à chaque
+  // TransitionSeries.Sequence, pas global). Calcul immuable (pas de
+  // réassignation en cours de rendu) : un tableau de durées, puis un
+  // tableau de débuts cumulés dérivé par réduction.
+  const verseFrames = verses.map((verse) => Math.round(resolveVerseDurationSec(verse, design) * fps));
+  const verseStartFrames = verseFrames.reduce<number[]>((starts, frames, i) => {
+    const start =
+      i === 0
+        ? withCover
+          ? coverFrames - (verses.length > 0 ? transitionFrames : 0)
+          : 0
+        : starts[i - 1] + verseFrames[i - 1] - transitionFrames;
+    return [...starts, start];
+  }, []);
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#000000" }}>
       <TransitionSeries>
+        {withCover && (
+          <TransitionSeries.Sequence key="cover" durationInFrames={coverFrames}>
+            <CoverSlide design={design} durationInFrames={coverFrames} />
+          </TransitionSeries.Sequence>
+        )}
+        {withCover && verses.length > 0 && (
+          <TransitionSeries.Transition
+            key="cover-transition"
+            presentation={resolvePresentation(design)}
+            timing={linearTiming({ durationInFrames: transitionFrames })}
+          />
+        )}
         {verses.flatMap((verse, i) => {
-          const frames = Math.round(resolveVerseDurationSec(verse, design) * fps);
+          const frames = verseFrames[i];
           const nodes: React.ReactNode[] = [
             <TransitionSeries.Sequence key={`slide-${verse.id}`} durationInFrames={frames}>
-              <Slide verse={verse} design={design} durationInFrames={frames} />
+              <Slide
+                verse={verse}
+                design={design}
+                durationInFrames={frames}
+                verseStartFrame={verseStartFrames[i]}
+                videoDurationInFrames={durationInFrames}
+              />
             </TransitionSeries.Sequence>,
           ];
           if (i < verses.length - 1) {
